@@ -54,7 +54,11 @@ describe Ethereum::Encoder do
 
   context "bytes32" do
     let (:expected) { '6461766500000000000000000000000000000000000000000000000000000000' }
+    let (:hex_value_0b_end) { '0xc12ad2000c304a0793c206dbe77f27eb26517185a589f87fec4e784422a88b0b' }
+    let (:hex_value_0b_start) { '0x0b2ad2000c304a0793c206dbe77f27eb26517185a589f87fec4e784422a88bbb' }
     specify { expect("bytes32").to encode_and_decode("dave").to(expected) }
+    it { expect(decoder.decode("bytes32", hex_value_0b_end).unpack('H*').first).to eq hex_value_0b_end[2..] }
+    it { expect(decoder.decode("bytes32", hex_value_0b_start).unpack('H*').first).to eq hex_value_0b_start[2..] }
   end
 
   context "fixed" do
@@ -195,4 +199,13 @@ describe Ethereum::Encoder do
     it { expect { encoder.encode_arguments(function.inputs, ["żółć"]) }.to raise_error "Wrong number of arguments" }
   end
 
+  context "decode tuples" do
+    context "decode a basic tuple setup" do
+      let(:components) { [OpenStruct.new({"type" => "int"}), OpenStruct.new({"type" => "int"})] }
+      let(:abi_inputs) { [OpenStruct.new({"type" => "int"}), OpenStruct.new({"type" => "tuple", "components" => components }), OpenStruct.new({"type" => "string"})] }
+      let(:data) { "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000046461766500000000000000000000000000000000000000000000000000000000" }
+
+      it { expect(decoder.decode_arguments(abi_inputs, data)).to eq([1, [2, 3], "dave"]) }
+    end
+  end
 end

@@ -57,7 +57,14 @@ module Ethereum
     end
 
     def decode_static_bytes(value, subtype = nil, start = 0)
-      trim(value, start, subtype.to_i*8).scan(/.{2}/).collect {|x| x.hex}.pack('C*').strip
+      value = trim(value, start, subtype.to_i*8).scan(/.{2}/).collect {|x| x.hex}.pack('C*')
+
+      # these whitespace characters are actually hex values so don't strip them
+      # for example \v is vertical line feed but in hex this is 0b so don't strip it
+      white_space_chars = ["\t","\n","\v","\f","\r"]
+      return value if value.ends_with?(*white_space_chars) || value.starts_with?(*white_space_chars)
+
+      value.strip
     end
 
     def decode_dynamic_bytes(value, start = 0)
@@ -70,13 +77,23 @@ module Ethereum
       decode_dynamic_bytes(value, start).force_encoding('utf-8')
     end
 
-    def decode_arguments(arguments, data)
+    def decode_arguments(arguments, data, start = 0)
       data = data.gsub(/^0x/,'')
       types = arguments.map { |o| o.type }
-      types.each.with_index.map { |t , i| decode(t, data, i*64) }
+      i = start
+      types.map do |t |
+        if t == "tuple"
+          args = decode_arguments(arguments[i].components, data, i)
+          i += arguments[i].components.size - 1
+        else
+          args = decode(t, data, i*64)
+        end
+        i += 1
+        args
+      end
     end
 
-    private 
+    private
       def trim(value, start, bitsize = 256)
         value[start+63-(bitsize/4-1)..start+63]
       end
