@@ -59,9 +59,11 @@ module Ethereum
     def decode_static_bytes(value, subtype = nil, start = 0)
       value = trim(value, start, subtype.to_i*8).scan(/.{2}/).collect {|x| x.hex}.pack('C*')
 
-      # don't strip these whitespace characters, but are actually hex values
+      # these whitespace characters are actually hex values so don't strip them
       # for example \v is vertical line feed but in hex this is 0b so don't strip it
-      return value if value.ends_with?("\v","\t","\n","\f","\r")
+      white_space_chars = ["\t","\n","\v","\f","\r"]
+      return value if value.ends_with?(*white_space_chars) || value.starts_with?(*white_space_chars)
+
       value.strip
     end
 
