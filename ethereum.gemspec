@@ -43,6 +43,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "eth", "~> 0.5"
   spec.add_development_dependency "ffi", "~> 1.15"
 
-  spec.add_dependency "activesupport", "~> 7.0"
+  spec.add_dependency "activesupport", "~> 6.0"
   spec.add_dependency "keccak", "~> 1.3"
 end
